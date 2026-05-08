@@ -1,0 +1,32 @@
+<% layout('layout/boilerplate') %>
+
+<div class="container mt-4">
+    <h2 class="mb-3">My Bookings</h2>
+
+    <% if (alllistings.length === 0) { %>
+        <div class="alert alert-info" role="alert">
+            You have not booked any listing yet.
+        </div>
+        <a href="/listings" class="btn btn-secondary">Browse Listings</a>
+    <% } else { %>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-1">
+            <% for(let listing of alllistings) { %>
+                <a href="/listings/<%= listing._id %>" class="listing-link">
+                    <div class="col">
+                        <div class="card h-100 listing-card">
+                            <img src="<%= listing.image.url %>" class="card-img-top" alt="<%= listing.title %>" style="height: 200px; object-fit: cover;">
+                            <div class="card-img-overlay"> Wanderlust</div>
+                            <div class="card-body">
+                                <h5 class="card-title"><%= listing.title %></h5>
+                                <p class="card-text">
+                                    <strong>Price:</strong> &#8377;<%= listing.price %> /Night<br>
+                                    <strong>Location:</strong> <%= listing.location %><br>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            <% } %>
+        </div>
+    <% } %>
+</div>

@@ -27,6 +27,11 @@ module.exports.index = async (req, res) => {
     res.render("listings/index.ejs", { alllistings, category, searchQuery: q });
 };
 
+module.exports.myBookings = async (req, res) => {
+    const alllistings = await Listing.find({ "bookings.user": req.user._id });
+    res.render("listings/bookings.ejs", { alllistings });
+};
+
 module.exports.renderNewForm = (req, res) => {
     console.log(req.user);
     res.render('listings/new.ejs');
@@ -41,8 +46,12 @@ module.exports.showlisting = async (req, res) => {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');
     }
+    let hasBooked = false;
+    if (req.user) {
+        hasBooked = listing.bookings.some((booking) => booking.user.equals(req.user._id));
+    }
     console.log(listing);
-    res.render("listings/show.ejs", { listing });
+    res.render("listings/show.ejs", { listing, hasBooked });
 };
 
 
@@ -90,4 +99,25 @@ module.exports.destroylisting = async (req, res) => {
     console.log(`Deleted listing: ${deletedlisting}`);
     req.flash('success', 'Successfully deleted the listing!');
     res.redirect('/listings');
+};
+
+module.exports.bookListing = async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+
+    if (!listing) {
+        req.flash('error', 'Cannot find that listing!');
+        return res.redirect('/listings');
+    }
+
+    const alreadyBooked = listing.bookings.some((booking) => booking.user.equals(req.user._id));
+    if (alreadyBooked) {
+        req.flash('error', 'You have already booked this listing.');
+        return res.redirect(`/listings/${id}`);
+    }
+
+    listing.bookings.push({ user: req.user._id });
+    await listing.save();
+    req.flash('success', 'Booking confirmed!');
+    res.redirect(`/listings/${id}`);
 };

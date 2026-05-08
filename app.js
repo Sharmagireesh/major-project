@@ -29,11 +29,15 @@ main().then(() => {
 async function main() {
     mongoose.connect(dBurl);
 }
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method', { methods: ['POST', 'GET'] }));
+//app.set('view engine', 'ejs');
+//app.set('views', path.join(__dirname, 'views'));
+//app.use(express.urlencoded({ extended: true }));
+//app.use(methodOverride('_method', { methods: ['POST', 'GET'] }));
 app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -95,10 +99,19 @@ app.get('/', (req, res) => {
     res.redirect('/listings');
 });
 
-app.all(/.*/, (req, res ,next) => {
+const videoRouter = require('./routes/video.js');
+app.use('/', videoRouter);
+app.get('/video', (req, res) => {
+    res.render('video');
+});
+
+app.all('*', (req, res ,next) => {
     next(new ExpressError(404, 'Page Not Found !'));
 });
 
+//app.all(/.*/, (req, res ,next) => {
+  //  next(new ExpressError(404, 'Page Not Found !'));
+//});
 
 // Global error handler - must be last
 app.use((err, req, res, next) => {
