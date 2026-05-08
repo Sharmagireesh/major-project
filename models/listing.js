@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const Review = require('./review.js');
+const bookingSchema = new Schema(
+    {
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        bookedAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    { _id: false }
+);
+
 const listingSchema = new Schema({
     title: { type: String, required: true },
     description: String,
@@ -21,6 +36,7 @@ const listingSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
+    bookings: [bookingSchema],
     category: {
         type: String,
         enum: ["Trending", "Rooms", "Vibrant Hubs", "Castles", "Beaches", "Park", "Family-Friendly", "Great views"]

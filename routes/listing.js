@@ -15,6 +15,8 @@ router.route("/")
 
 // NEW ROUTE 
 router.get("/new", isLoggedIn, listingController.renderNewForm);
+router.get("/bookings/me", isLoggedIn, wrapAsync(listingController.myBookings));
+router.post("/:id/book", isLoggedIn, wrapAsync(listingController.bookListing));
 
 router.route("/:id")
 .get(wrapAsync(listingController.showlisting))

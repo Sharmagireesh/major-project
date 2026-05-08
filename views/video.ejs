@@ -1,0 +1,108 @@
+<% layout('layout/boilerplate') %>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2>Agora Video Call</h2>
+            
+            <!-- Join Room Section -->
+            <div id="join-section" class="card p-4 mb-3">
+                <h4>Join Video Call</h4>
+                <div class="mb-3">
+                    <label>Channel Name:</label>
+                    <input type="text" id="channelName" class="form-control" placeholder="e.g., room123" value="wanderlust-room">
+                </div>
+                <div class="mb-3">
+                    <label>Your User ID:</label>
+                    <input type="number" id="uid" class="form-control" placeholder="e.g., 1" value="1">
+                </div>
+                <button class="btn btn-primary" onclick="joinCall()">Join Call</button>
+            </div>
+            
+            <!-- Video Call Section -->
+            <div id="call-section" style="display:none;" class="card p-4">
+                <h4>Video Call Active</h4>
+                <div id="local-player" style="width: 100%; height: 400px; background: #000; border-radius: 8px; margin-bottom: 10px;"></div>
+                <div id="remote-playerlist" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                <button class="btn btn-danger mt-3" onclick="leaveCall()">Leave Call</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agora SDK -->
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+<script>
+    const APP_ID = "5af13b19db14410dafc29455c182eb0b";
+    let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    let localTracks = [];
+    let remoteUsers = {};
+    async function joinCall() {
+    const channelName = document.getElementById('channelName').value;
+    const uid = parseInt(document.getElementById('uid').value);
+
+    if (!channelName) {
+        alert('Please enter channel name');
+        return;
+    }
+
+    try {
+        const response = await fetch('/agora-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelName, uid })
+        });
+
+        const data = await response.json();
+        const token = data.token; // null for testing mode — that's fine
+
+        // ✅ Correct: (appId, channelName, token, uid)
+        await client.join(APP_ID, channelName, token, uid);
+
+        localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+        await client.publish(localTracks);
+        localTracks[1].play('local-player');
+
+        document.getElementById('join-section').style.display = 'none';
+        document.getElementById('call-section').style.display = 'block';
+
+        client.on('user-published', handleUserPublished);
+        client.on('user-unpublished', handleUserUnpublished);
+
+        console.log('Successfully joined the channel');
+    } catch (error) {
+        console.error('Error joining call:', error);
+        alert('Failed to join call: ' + error.message);
+    }
+}
+    async function handleUserPublished(user, mediaType) {
+        remoteUsers[user.uid] = user;
+        await client.subscribe(user, mediaType);
+        
+        if (mediaType === 'video') {
+            const remotePlayerContainer = document.getElementById('remote-playerlist');
+            const playerDiv = document.createElement('div');
+            playerDiv.id = user.uid;
+            playerDiv.style = 'width: 200px; height: 200px; background: #000; border-radius: 8px;';
+            remotePlayerContainer.appendChild(playerDiv);
+            user.videoTrack.play(playerDiv);
+        }
+    }
+    
+    async function handleUserUnpublished(user) {
+        delete remoteUsers[user.uid];
+        const playerDiv = document.getElementById(user.uid);
+        if (playerDiv) playerDiv.remove();
+    }
+    
+    async function leaveCall() {
+        localTracks.forEach(track => track.close());
+        await client.leave();
+        
+        document.getElementById('join-section').style.display = 'block';
+        document.getElementById('call-section').style.display = 'none';
+        document.getElementById('remote-playerlist').innerHTML = '';
+        
+        console.log('Left the channel');
+    }
+</script>
