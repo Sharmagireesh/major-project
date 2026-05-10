@@ -16,7 +16,7 @@
                 <h4>Join Video Call</h4>
                 <div class="mb-3">
                     <label>Channel Name:</label>
-                    <input type="text" id="channelName" class="form-control" value="listing-<%= listing._id %>" readonly>
+                    <input type="text" id="channelName" class="form-control" value="<%= channelName %>" readonly>
                 </div>
                 <div class="mb-3">
                     <label>Your Account:</label>
@@ -41,6 +41,7 @@
 
 <script>
     let APP_ID = null;
+    const CALL_ID = "<%= callId %>";
     let client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     let localTracks = [];
     let remoteUsers = {};
@@ -57,7 +58,7 @@
         const response = await fetch('/agora-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channelName, listingId: "<%= listing._id %>" })
+            body: JSON.stringify({ channelName, listingId: "<%= listing._id %>", callId: CALL_ID })
         });
 
         const data = await response.json();

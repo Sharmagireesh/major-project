@@ -23,7 +23,9 @@
                                     <strong>Price:</strong> &#8377;<%= listing.price %> /Night<br>
                                     <strong>Location:</strong> <%= listing.location %><br>
                                 </p>
-                                <a href="/video/<%= listing._id %>" class="btn btn-outline-primary btn-sm mb-2 w-100">Video Call Owner</a>
+                                <form method="POST" action="/calls/<%= listing._id %>/initiate" class="mb-2">
+                                    <button class="btn btn-outline-primary btn-sm w-100">Start Video Call</button>
+                                </form>
                                 <form method="POST" action="/listings/<%= listing._id %>/cancel-booking" class="mt-auto">
                                     <button class="btn btn-outline-danger btn-sm w-100">Cancel Booking</button>
                                 </form>
