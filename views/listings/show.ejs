@@ -13,13 +13,15 @@
                 <div class="d-flex justify-content-between mt-3">
                     <a href="/listings" class="btn btn-secondary">Back to Listings</a>
                     <% if (currentUser && !currentUser._id.equals(listing.owner._id)) { %>
-                    <form method="POST" action="/listings/<%= listing._id %>/book" style="display: inline;">
                         <% if (hasBooked) { %>
-                        <button class="btn btn-success" disabled>Already booked</button>
-                        <% } else { %>
-                        <button class="btn btn-warning">Book now</button>
-                        <% } %>
+                    <form method="POST" action="/listings/<%= listing._id %>/cancel-booking" style="display: inline;">
+                        <button class="btn btn-outline-danger">Cancel Booking</button>
                     </form>
+                        <% } else { %>
+                    <form method="POST" action="/listings/<%= listing._id %>/book" style="display: inline;">
+                        <button class="btn btn-warning">Book now</button>
+                    </form>
+                        <% } %>
                     <% } %>
                     <% if(currentUser && currentUser._id.equals(listing.owner._id)) {%>
                     <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary">Edit</a>
