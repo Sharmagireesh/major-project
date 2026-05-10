@@ -121,3 +121,25 @@ module.exports.bookListing = async (req, res) => {
     req.flash('success', 'Booking confirmed!');
     res.redirect(`/listings/${id}`);
 };
+
+module.exports.cancelBooking = async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+
+    if (!listing) {
+        req.flash('error', 'Cannot find that listing!');
+        return res.redirect('/listings');
+    }
+
+    const initialCount = listing.bookings.length;
+    listing.bookings = listing.bookings.filter((booking) => !booking.user.equals(req.user._id));
+
+    if (listing.bookings.length === initialCount) {
+        req.flash('error', 'You do not have an active booking for this listing.');
+        return res.redirect(`/listings/${id}`);
+    }
+
+    await listing.save();
+    req.flash('success', 'Booking cancelled successfully.');
+    res.redirect(req.get('referer') || `/listings/${id}`);
+};
