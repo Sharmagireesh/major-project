@@ -1,0 +1,33 @@
+<% layout('layout/boilerplate') %>
+
+<div class="container mt-4">
+    <h2 class="mb-3">Incoming Video Call Requests</h2>
+
+    <% if (calls.length === 0) { %>
+        <div class="alert alert-info">No incoming call requests right now.</div>
+    <% } else { %>
+        <div class="row">
+            <% calls.forEach((call) => { %>
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= call.listing.title %></h5>
+                            <p class="card-text mb-1"><strong>Caller:</strong> <%= call.caller.username %></p>
+                            <p class="card-text mb-2"><strong>Location:</strong> <%= call.listing.location %></p>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="/calls/<%= call._id %>/respond">
+                                    <input type="hidden" name="action" value="accept">
+                                    <button class="btn btn-success btn-sm">Accept & Join</button>
+                                </form>
+                                <form method="POST" action="/calls/<%= call._id %>/respond">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button class="btn btn-outline-danger btn-sm">Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>

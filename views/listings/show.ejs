@@ -11,7 +11,9 @@
                 <p class="card-text"><strong>Location:</strong> <%= listing.location %></p>
                 <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
                 <% if (currentUser && hasBooked && !currentUser._id.equals(listing.owner._id)) { %>
-                <a href="/video/<%= listing._id %>" class="btn btn-outline-primary btn-sm mb-2">Video Call Owner</a>
+                <form method="POST" action="/calls/<%= listing._id %>/initiate" class="mb-2">
+                    <button class="btn btn-outline-primary btn-sm">Start Video Call with Owner</button>
+                </form>
                 <% } %>
                 <div class="d-flex justify-content-between mt-3">
                     <a href="/listings" class="btn btn-secondary">Back to Listings</a>

@@ -19,6 +19,7 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user.js');
+const CallRequest = require('./models/callRequest.js');
 
 main().then(() => {
     console.log('Connected to MongoDB');
@@ -83,6 +84,18 @@ app.use((req, res, next) => {
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     res.locals.currentUser = req.user;
+    res.locals.pendingCallCount = 0;
+    next();
+});
+
+app.use(async (req, res, next) => {
+    if (req.user) {
+        const pendingCallCount = await CallRequest.countDocuments({
+            owner: req.user._id,
+            status: 'ringing',
+        });
+        res.locals.pendingCallCount = pendingCallCount;
+    }
     next();
 });
 
@@ -105,7 +118,9 @@ app.get('/', (req, res) => {
 });
 
 const videoRouter = require('./routes/video.js');
+const callRouter = require('./routes/call.js');
 app.use('/', videoRouter);
+app.use('/calls', callRouter);
 
 app.all('*', (req, res ,next) => {
     next(new ExpressError(404, 'Page Not Found !'));
