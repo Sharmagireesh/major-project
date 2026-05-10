@@ -106,9 +106,6 @@ app.get('/', (req, res) => {
 
 const videoRouter = require('./routes/video.js');
 app.use('/', videoRouter);
-app.get('/video', (req, res) => {
-    res.render('video');
-});
 
 app.all('*', (req, res ,next) => {
     next(new ExpressError(404, 'Page Not Found !'));
