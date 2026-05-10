@@ -96,6 +96,9 @@ app.use('/listings', listingsRouter);
 app.use("/listings/:id/reviews",reviewsRouter);
 app.use('/', userRouter);
 app.use('/api/ai', aiRouter);
+app.get('/ai-planner', (req, res) => {
+    res.render('ai/planner.ejs');
+});
 
 app.get('/', (req, res) => {
     res.redirect('/listings');
