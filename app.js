@@ -12,6 +12,7 @@ const ExpressError = require('./utils/ExpressError.js');
 const listingsRouter = require("./routes/listing.js");
 const reviewsRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
+const aiRouter = require("./routes/ai.js");
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
@@ -94,6 +95,7 @@ app.use((req, res, next) => {
 app.use('/listings', listingsRouter);
 app.use("/listings/:id/reviews",reviewsRouter);
 app.use('/', userRouter);
+app.use('/api/ai', aiRouter);
 
 app.get('/', (req, res) => {
     res.redirect('/listings');

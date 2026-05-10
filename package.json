@@ -30,6 +30,8 @@
 
     "@fluidjs/multer-cloudinary": "^1.0.4",
 
+    "@google/generative-ai": "^0.24.1",
+
     "agora-access-token": "^2.0.4",
 
     "agora-token": "^2.0.5",
