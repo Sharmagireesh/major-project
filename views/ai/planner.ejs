@@ -1,0 +1,117 @@
+<% layout('layout/boilerplate') %>
+
+<div class="row mt-4">
+  <div class="col-12 col-md-10 col-lg-8 offset-md-1 offset-lg-2">
+    <h2 class="mb-3">AI Trip Planner</h2>
+    <p class="text-muted">Generate a day-wise Himachal plan with stay suggestions.</p>
+
+    <form id="aiPlanForm" class="card p-3 mb-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-5">
+          <label for="query" class="form-label">Destination</label>
+          <input id="query" name="query" type="text" class="form-control" placeholder="Manali" required>
+        </div>
+        <div class="col-6 col-md-3">
+          <label for="days" class="form-label">Days</label>
+          <input id="days" name="days" type="number" class="form-control" min="1" value="3" required>
+        </div>
+        <div class="col-6 col-md-4">
+          <label for="budget" class="form-label">Budget (Rs)</label>
+          <input id="budget" name="budget" type="number" class="form-control" min="1000" value="12000" required>
+        </div>
+      </div>
+      <button id="generateBtn" class="btn btn-dark mt-3" type="submit">Generate Plan</button>
+    </form>
+
+    <div id="errorBox" class="alert alert-danger d-none"></div>
+    <div id="resultBox" class="d-none">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title mb-0">Estimated Total Cost: <span id="totalCost"></span></h5>
+          <small id="sourceTag" class="text-muted"></small>
+        </div>
+      </div>
+      <div id="itineraryList" class="mb-3"></div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Tips</h5>
+          <ul id="tipsList" class="mb-0"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("aiPlanForm");
+  const generateBtn = document.getElementById("generateBtn");
+  const errorBox = document.getElementById("errorBox");
+  const resultBox = document.getElementById("resultBox");
+  const totalCost = document.getElementById("totalCost");
+  const sourceTag = document.getElementById("sourceTag");
+  const itineraryList = document.getElementById("itineraryList");
+  const tipsList = document.getElementById("tipsList");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBox.classList.add("d-none");
+    resultBox.classList.add("d-none");
+    generateBtn.disabled = true;
+    generateBtn.textContent = "Generating...";
+
+    const payload = {
+      query: document.getElementById("query").value.trim(),
+      days: Number(document.getElementById("days").value),
+      budget: Number(document.getElementById("budget").value),
+    };
+
+    try {
+      const res = await fetch("/api/ai/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.details || data.error || "Failed to generate plan");
+
+      totalCost.textContent = `Rs ${data.totalCost || 0}`;
+      sourceTag.textContent = data.source === "fallback" ? "Generated in demo fallback mode" : "";
+
+      itineraryList.innerHTML = "";
+      (data.itinerary || []).forEach((day) => {
+        const activities = (day.activities || []).map((a) => `<li>${a}</li>`).join("");
+        const stay = day.staySuggestion || {};
+        const bookBtn = stay._id
+          ? `<a href="/listings/${stay._id}" class="btn btn-sm btn-warning mt-2">Book Now</a>`
+          : `<button class="btn btn-sm btn-secondary mt-2" disabled>Book Now</button>`;
+
+        itineraryList.innerHTML += `
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5>Day ${day.day}: ${day.title || ""}</h5>
+              <ul>${activities}</ul>
+              <div class="border rounded p-2 mt-2">
+                <strong>Stay:</strong> ${stay.name || "Suggested Homestay"}<br>
+                <small>Price: Rs ${stay.price || "-"}</small><br>
+                ${bookBtn}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      tipsList.innerHTML = "";
+      (data.tips || []).forEach((tip) => {
+        tipsList.innerHTML += `<li>${tip}</li>`;
+      });
+
+      resultBox.classList.remove("d-none");
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.classList.remove("d-none");
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate Plan";
+    }
+  });
+</script>
