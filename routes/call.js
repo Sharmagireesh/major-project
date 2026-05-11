@@ -77,6 +77,7 @@ router.post('/:id/respond', isLoggedIn, wrapAsync(async (req, res) => {
 }));
 
 router.get('/:id/waiting', isLoggedIn, wrapAsync(async (req, res) => {
+    const { id } = req.params;
     const call = await CallRequest.findById(id).populate('listing');
     if (!call) {
         req.flash('error', 'Call request not found.');
@@ -90,6 +91,7 @@ router.get('/:id/waiting', isLoggedIn, wrapAsync(async (req, res) => {
 }));
 
 router.get('/:id/status', isLoggedIn, wrapAsync(async (req, res) => {
+    const { id } = req.params;
     const call = await CallRequest.findById(id);
     if (!call) {
         return res.status(404).json({ error: 'Call request not found' });
