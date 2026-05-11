@@ -58,10 +58,23 @@
         const response = await fetch('/agora-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channelName, listingId: "<%= listing._id %>", callId: CALL_ID })
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                channelName,
+                listingId: "<%= listing._id %>",
+                callId: CALL_ID || undefined,
+            }),
         });
 
-        const data = await response.json();
+        const raw = await response.text();
+        let data = {};
+        if (raw) {
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                throw new Error('Server did not return JSON (you may need to log in again).');
+            }
+        }
         if (!response.ok) throw new Error(data.error || 'Failed to generate token');
 
         const token = data.token;

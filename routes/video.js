@@ -46,9 +46,15 @@ router.get('/video/:id', isLoggedIn, async (req, res) => {
     res.render('video.ejs', { listing, isOwner, channelName, callId: callId || '' });
 });
 
-router.post('/agora-token', isLoggedIn, async (req, res) => {
+router.post('/agora-token', (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'You must be logged in to join the call.' });
+    }
+    next();
+}, async (req, res) => {
     try {
-        const { channelName, listingId, callId } = req.body;
+        const { channelName, listingId } = req.body;
+        const callId = req.body.callId && String(req.body.callId).trim() ? req.body.callId : undefined;
         const listing = await Listing.findById(listingId).populate('owner');
         if (!listing) {
             return res.status(404).json({ error: 'Listing not found' });
