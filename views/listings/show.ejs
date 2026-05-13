@@ -11,15 +11,6 @@
                 <p class="card-text"><strong>Location:</strong> <%= listing.location %></p>
                 <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
 
-                <hr class="my-3">
-                <h5 class="mb-2">Location on map</h5>
-                <p class="text-muted small mb-2">
-                    Map tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.
-                    Pin position is estimated from the address using Nominatim (free geocoding).
-                </p>
-                <div id="listing-map" class="rounded border mb-2" style="height: 380px; z-index: 1;"></div>
-                <p id="listing-map-status" class="small text-muted mb-0"></p>
-
                 <% if (currentUser && hasBooked && !currentUser._id.equals(listing.owner._id)) { %>
                 <form method="POST" action="/calls/<%= listing._id %>/initiate" class="mb-2">
                     <button class="btn btn-outline-primary btn-sm">Start Video Call with Owner</button>
@@ -44,6 +35,18 @@
                         <button class="btn btn-danger">Delete</button>
                     </form>
                     <% } %>
+                </div>
+
+                <hr class="my-4">
+                <h5 class="mb-2">Location on map</h5>
+                <p class="text-muted small mb-2">
+                    Map tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.
+                    Pin is estimated from the address (Nominatim). Map stays in this box — use marker to open details.
+                </p>
+                <div class="listing-map-shell rounded border bg-light">
+                    <div id="listing-map" class="listing-map-inner"></div>
+                </div>
+                <p id="listing-map-status" class="small text-muted mt-2 mb-0"></p>
             </div>
         </div>
     </div>
@@ -104,6 +107,37 @@
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR6BMY=" crossorigin="" />
+<style>
+  /* Keep Leaflet layers and popups clipped to this card region (no full-page overlay) */
+  .listing-map-shell {
+    position: relative;
+    height: 260px;
+    max-width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+    contain: layout paint;
+  }
+  .listing-map-inner {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .listing-map-shell .leaflet-container {
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    font-family: inherit;
+  }
+  .listing-map-shell .leaflet-popup-content-wrapper {
+    max-width: min(280px, 92vw);
+  }
+  .listing-map-shell .leaflet-popup-content {
+    max-height: 180px;
+    overflow: auto;
+    margin: 10px 12px;
+  }
+</style>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (function () {
@@ -143,7 +177,6 @@
             "<small>" + String(meta.display_name || query).replace(/</g, "&lt;") + "</small><br>" +
             '<a href="' + listingUrl + '#book-actions">View listing &amp; book</a>';
         marker.bindPopup(popupHtml);
-        marker.openPopup();
         setTimeout(function () { map.invalidateSize(); }, 200);
         if (meta.fallback) {
             setStatus("Approximate position (address not found precisely).");
