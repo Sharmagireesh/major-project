@@ -10,12 +10,22 @@
                 <p class="card-text"><strong>Price:</strong> &#8377;<%= listing.price.toLocaleString("en-IN") %></p>
                 <p class="card-text"><strong>Location:</strong> <%= listing.location %></p>
                 <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
+
+                <hr class="my-3">
+                <h5 class="mb-2">Location on map</h5>
+                <p class="text-muted small mb-2">
+                    Map tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.
+                    Pin position is estimated from the address using Nominatim (free geocoding).
+                </p>
+                <div id="listing-map" class="rounded border mb-2" style="height: 380px; z-index: 1;"></div>
+                <p id="listing-map-status" class="small text-muted mb-0"></p>
+
                 <% if (currentUser && hasBooked && !currentUser._id.equals(listing.owner._id)) { %>
                 <form method="POST" action="/calls/<%= listing._id %>/initiate" class="mb-2">
                     <button class="btn btn-outline-primary btn-sm">Start Video Call with Owner</button>
                 </form>
                 <% } %>
-                <div class="d-flex justify-content-between mt-3">
+                <div id="book-actions" class="d-flex justify-content-between mt-3 flex-wrap gap-2">
                     <a href="/listings" class="btn btn-secondary">Back to Listings</a>
                     <% if (currentUser && !currentUser._id.equals(listing.owner._id)) { %>
                         <% if (hasBooked) { %>
@@ -92,3 +102,64 @@
         </div>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR6BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function () {
+    const MAP_ID = "listing-map";
+    const STATUS_ID = "listing-map-status";
+    const query = <%- JSON.stringify(`${listing.location}, ${listing.country}`) %>;
+    const title = <%- JSON.stringify(listing.title) %>;
+    const priceLabel = <%- JSON.stringify(`₹${listing.price.toLocaleString("en-IN")} / night`) %>;
+    const listingUrl = <%- JSON.stringify(`/listings/${listing._id}`) %>;
+
+    const statusEl = document.getElementById(STATUS_ID);
+    function setStatus(msg) {
+        if (statusEl) statusEl.textContent = msg;
+    }
+
+    async function loadCoords() {
+        const res = await fetch("/listings/geocode?q=" + encodeURIComponent(query), {
+            headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(function () { return null; });
+        if (!res.ok || !data || typeof data.lat !== "number" || typeof data.lon !== "number") {
+            throw new Error("Could not resolve location");
+        }
+        return data;
+    }
+
+    function buildMap(lat, lon, meta) {
+        var map = L.map(MAP_ID).setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+        var marker = L.marker([lat, lon]).addTo(map);
+        var popupHtml =
+            "<b>" + title.replace(/</g, "&lt;") + "</b><br>" +
+            priceLabel.replace(/</g, "&lt;") + "<br>" +
+            "<small>" + String(meta.display_name || query).replace(/</g, "&lt;") + "</small><br>" +
+            '<a href="' + listingUrl + '#book-actions">View listing &amp; book</a>';
+        marker.bindPopup(popupHtml);
+        marker.openPopup();
+        setTimeout(function () { map.invalidateSize(); }, 200);
+        if (meta.fallback) {
+            setStatus("Approximate position (address not found precisely).");
+        } else {
+            setStatus("Pin from address search: " + (meta.display_name || ""));
+        }
+    }
+
+    loadCoords()
+        .then(function (meta) {
+            setStatus("Loading map…");
+            buildMap(meta.lat, meta.lon, meta);
+        })
+        .catch(function () {
+            setStatus("Map could not load; showing default Himachal view.");
+            buildMap(31.1048, 77.1734, { display_name: "Shimla area (default)", fallback: true });
+        });
+})();
+</script>
